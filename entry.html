@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IPPT Entry</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 28px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6e6e73;
+      margin-bottom: 8px;
+    }
+
+    input[type="date"],
+    input[type="number"] {
+      width: 100%;
+      font-size: 22px;
+      font-family: inherit;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #1c1c1e;
+      padding: 4px 0;
+      -webkit-appearance: none;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+
+    .run-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .run-row input {
+      flex: 1;
+      text-align: center;
+    }
+
+    .run-sep {
+      font-size: 28px;
+      font-weight: 300;
+      color: #6e6e73;
+      line-height: 1;
+    }
+
+    .run-labels {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .run-labels span {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      color: #aeaeb2;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    button[type="submit"] {
+      display: block;
+      width: 100%;
+      padding: 18px;
+      background: #007aff;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+
+    button[type="submit"]:active {
+      opacity: 0.8;
+    }
+
+    button[type="submit"]:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    #status {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    #status.success {
+      background: #d1f2e0;
+      color: #1a7a40;
+    }
+
+    #status.error {
+      background: #fde8e8;
+      color: #b00020;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>IPPT Entry</h1>
+
+  <form id="ipptForm">
+
+    <div class="card">
+      <label for="date">Date</label>
+      <input type="date" id="date" name="date" required>
+    </div>
+
+    <div class="card">
+      <label for="pushups">Push-ups</label>
+      <input type="number" id="pushups" name="pushups" min="0" max="100" placeholder="0" required inputmode="numeric">
+    </div>
+
+    <div class="card">
+      <label for="situps">Sit-ups</label>
+      <input type="number" id="situps" name="situps" min="0" max="100" placeholder="0" required inputmode="numeric">
+    </div>
+
+    <div class="card">
+      <label>2.4 km Run</label>
+      <div class="run-row">
+        <input type="number" id="run_mm" name="run_mm" min="0" max="30" placeholder="00" required inputmode="numeric">
+        <span class="run-sep">:</span>
+        <input type="number" id="run_ss" name="run_ss" min="0" max="59" placeholder="00" required inputmode="numeric">
+      </div>
+      <div class="run-labels">
+        <span>min</span>
+        <span>sec</span>
+      </div>
+    </div>
+
+    <button type="submit" id="submitBtn">Save Entry</button>
+
+    <div id="status"></div>
+
+  </form>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1pKWSWSJdHesqh68813VJvb78UFjd6ZNKF2TlhdJ4M8yJBTmzW5VBp2Z5KGpdM-_1iQ/exec";
+
+    // Default date to today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
+
+    document.getElementById("ipptForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById("submitBtn");
+      const status = document.getElementById("status");
+
+      // Validate seconds
+      const ss = parseInt(document.getElementById("run_ss").value);
+      if (ss > 59) {
+        showStatus("Seconds must be 00–59.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+      status.style.display = "none";
+
+      const payload = {
+        date:    document.getElementById("date").value,
+        pushups: document.getElementById("pushups").value,
+        situps:  document.getElementById("situps").value,
+        run_mm:  document.getElementById("run_mm").value,
+        run_ss:  document.getElementById("run_ss").value,
+      };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json();
+
+        if (json.status === "ok") {
+          showStatus("Saved!", "success");
+          document.getElementById("ipptForm").reset();
+          document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
+        } else {
+          showStatus("Error: " + (json.message || "unknown"), "error");
+        }
+      } catch (err) {
+        showStatus("Network error — check your connection.", "error");
+      }
+
+      btn.disabled = false;
+      btn.textContent = "Save Entry";
+    });
+
+    function showStatus(msg, type) {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = type;
+      el.style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
