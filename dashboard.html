@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IPPT Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f4f6f9;
+      --card:     #ffffff;
+      --border:   #e0e4ea;
+      --text:     #1a1d23;
+      --muted:    #6b7280;
+      --accent:   #2563eb;
+      --gold:     #d97706;
+      --silver:   #6b7280;
+      --passi:    #16a34a;
+      --pass:     #2563eb;
+      --fail:     #dc2626;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    #meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: right;
+      line-height: 1.5;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* ── Personal Bests ── */
+    .bests-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .best-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .best-card .label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .best-card .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .best-card .sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .best-card.total .value { color: var(--accent); }
+
+    /* ── Chart ── */
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card canvas {
+      width: 100% !important;
+      height: 180px !important;
+    }
+
+    /* ── History Table ── */
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .table-card table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .table-card th {
+      background: #f9fafb;
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      padding: 10px 12px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-card th:first-child { text-align: left; }
+
+    .table-card td {
+      padding: 9px 12px;
+      text-align: center;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .table-card td:first-child { text-align: left; }
+
+    .table-card tr:last-child td { border-bottom: none; }
+
+    .award-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .award-Gold    { background: #fef3c7; color: var(--gold); }
+    .award-Silver  { background: #f3f4f6; color: var(--silver); }
+    .award-PassI   { background: #dcfce7; color: var(--passi); }
+    .award-Pass    { background: #dbeafe; color: var(--pass); }
+    .award-Fail    { background: #fee2e2; color: var(--fail); }
+
+    /* ── Status ── */
+    #status {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    #error-msg {
+      background: #fee2e2;
+      color: var(--fail);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding-bottom: 8px;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>IPPT Dashboard</h1>
+    <div id="meta">Loading…</div>
+  </header>
+
+  <div id="error-msg"></div>
+  <div id="status">Loading your data…</div>
+  <div id="content" style="display:none">
+
+    <!-- Personal Bests -->
+    <p class="section-title">Personal Bests</p>
+    <div class="bests-grid">
+      <div class="best-card total">
+        <div class="label">Best Total</div>
+        <div class="value" id="pb-total">—</div>
+        <div class="sub" id="pb-total-sub"></div>
+      </div>
+      <div class="best-card">
+        <div class="label">Best Run</div>
+        <div class="value" id="pb-run">—</div>
+        <div class="sub" id="pb-run-sub"></div>
+      </div>
+      <div class="best-card">
+        <div class="label">Best Push-ups</div>
+        <div class="value" id="pb-pu">—</div>
+        <div class="sub" id="pb-pu-sub"></div>
+      </div>
+      <div class="best-card">
+        <div class="label">Best Sit-ups</div>
+        <div class="value" id="pb-su">—</div>
+        <div class="sub" id="pb-su-sub"></div>
+      </div>
+    </div>
+
+    <!-- Last 6 Months Chart -->
+    <div class="chart-card">
+      <p class="section-title" style="margin-bottom:12px">Last 6 Months — Total Score</p>
+      <canvas id="scoreChart"></canvas>
+      <div id="no-chart-data" style="text-align:center;color:var(--muted);font-size:0.82rem;padding:20px 0;display:none">
+        No entries in the last 6 months.
+      </div>
+    </div>
+
+    <!-- All-time History -->
+    <div class="table-card">
+      <div style="padding:14px 16px 0">
+        <p class="section-title">All-time History</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>PU</th>
+            <th>SU</th>
+            <th>Run</th>
+            <th>Total</th>
+            <th>Award</th>
+          </tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <footer>
+    <a href="entry.html">+ Log new entry</a>
+  </footer>
+
+  <script>
+    // ── CONFIG ───────────────────────────────────────────────────────────────
+    // Paste your Apps Script web app URL here (same URL used in entry.html).
+    var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1pKWSWSJdHesqh68813VJvb78UFjd6ZNKF2TlhdJ4M8yJBTmzW5VBp2Z5KGpdM-_1iQ/exec';
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function fmtDate(isoStr) {
+      // "2025-09-13" → "13 Sep 2025"
+      var parts = isoStr.split('-');
+      if (parts.length !== 3) return isoStr;
+      var months = ['Jan','Feb','Mar','Apr','May','Jun',
+                    'Jul','Aug','Sep','Oct','Nov','Dec'];
+      return parts[2] + ' ' + months[parseInt(parts[1], 10) - 1] + ' ' + parts[0];
+    }
+
+    function awardClass(award) {
+      if (award === 'Gold')    return 'award-Gold';
+      if (award === 'Silver')  return 'award-Silver';
+      if (award === 'Pass(I)') return 'award-PassI';
+      if (award === 'Pass')    return 'award-Pass';
+      return 'award-Fail';
+    }
+
+    function secsToDisplay(secs) {
+      var m = Math.floor(secs / 60);
+      var s = secs % 60;
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function daysSince(isoStr) {
+      var then = new Date(isoStr);
+      var now  = new Date();
+      var diff = Math.floor((now - then) / 86400000);
+      return diff;
+    }
+
+    // ── Fetch & Render ────────────────────────────────────────────────────────
+
+    function showError(msg) {
+      var el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+      document.getElementById('status').style.display = 'none';
+    }
+
+    function render(rows) {
+      if (!rows || rows.length === 0) {
+        document.getElementById('status').textContent = 'No entries found in your sheet.';
+        return;
+      }
+
+      document.getElementById('status').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+
+      // Sort newest-first for the table (ascending date for chart later)
+      var sorted = rows.slice().sort(function(a, b) {
+        return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+      });
+
+      // ── Personal Bests ──────────────────────────────────────────────────
+
+      var bestTotal = sorted.reduce(function(best, r) {
+        return (Number(r.total) > Number(best.total)) ? r : best;
+      }, sorted[0]);
+
+      var bestPU = sorted.reduce(function(best, r) {
+        return (Number(r.pushups) > Number(best.pushups)) ? r : best;
+      }, sorted[0]);
+
+      var bestSU = sorted.reduce(function(best, r) {
+        return (Number(r.situps) > Number(best.situps)) ? r : best;
+      }, sorted[0]);
+
+      var bestRun = sorted.reduce(function(best, r) {
+        return (Number(r.run_seconds) < Number(best.run_seconds)) ? r : best;
+      }, sorted[0]);
+
+      document.getElementById('pb-total').textContent = Number(bestTotal.total);
+      document.getElementById('pb-total-sub').textContent =
+        bestTotal.award + ' · ' + fmtDate(bestTotal.date);
+
+      document.getElementById('pb-run').textContent =
+        bestRun.run_display || secsToDisplay(Number(bestRun.run_seconds));
+      document.getElementById('pb-run-sub').textContent = fmtDate(bestRun.date);
+
+      document.getElementById('pb-pu').textContent = Number(bestPU.pushups);
+      document.getElementById('pb-pu-sub').textContent = fmtDate(bestPU.date);
+
+      document.getElementById('pb-su').textContent = Number(bestSU.situps);
+      document.getElementById('pb-su-sub').textContent = fmtDate(bestSU.date);
+
+      // ── Meta (last test + days since + trend) ───────────────────────────
+
+      var last  = sorted[sorted.length - 1];
+      var prev  = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
+      var days  = daysSince(last.date);
+
+      var trendText = '';
+      if (prev) {
+        var delta = Number(last.total) - Number(prev.total);
+        if (delta > 0)      trendText = ' ↑' + delta + ' vs prev';
+        else if (delta < 0) trendText = ' ↓' + Math.abs(delta) + ' vs prev';
+        else                trendText = ' = vs prev';
+      }
+
+      document.getElementById('meta').innerHTML =
+        'Last test: ' + fmtDate(last.date) + '<br>' +
+        days + ' days ago' + trendText;
+
+      // ── Last 6 Months Chart ──────────────────────────────────────────────
+
+      var sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      var sixMonthsIso = sixMonthsAgo.toISOString().slice(0, 10);
+
+      var chartRows = sorted.filter(function(r) { return r.date >= sixMonthsIso; });
+
+      if (chartRows.length === 0) {
+        document.getElementById('scoreChart').style.display = 'none';
+        document.getElementById('no-chart-data').style.display = 'block';
+      } else {
+        var labels = chartRows.map(function(r) {
+          var p = r.date.split('-');
+          var months = ['Jan','Feb','Mar','Apr','May','Jun',
+                        'Jul','Aug','Sep','Oct','Nov','Dec'];
+          return p[2] + ' ' + months[parseInt(p[1], 10) - 1];
+        });
+        var totals = chartRows.map(function(r) { return Number(r.total); });
+
+        var ctx = document.getElementById('scoreChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Total',
+              data: totals,
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37,99,235,0.08)',
+              pointBackgroundColor: '#2563eb',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  afterLabel: function(ctx) {
+                    var r = chartRows[ctx.dataIndex];
+                    return r.award + ' · PU ' + r.pushups +
+                           ' SU ' + r.situps +
+                           ' Run ' + (r.run_display || secsToDisplay(Number(r.run_seconds)));
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                min: 40,
+                max: 100,
+                ticks: { stepSize: 10, font: { size: 11 } },
+                grid: { color: '#f0f0f0' }
+              },
+              x: {
+                ticks: { font: { size: 10 }, maxRotation: 45 },
+                grid: { display: false }
+              }
+            }
+          }
+        });
+      }
+
+      // ── All-time History Table ───────────────────────────────────────────
+
+      var tbody = document.getElementById('history-body');
+      var newestFirst = sorted.slice().reverse();
+
+      newestFirst.forEach(function(r) {
+        var tr = document.createElement('tr');
+        var runDisplay = r.run_display || secsToDisplay(Number(r.run_seconds));
+        var badgeClass = awardClass(r.award);
+        tr.innerHTML =
+          '<td>' + fmtDate(r.date) + '</td>' +
+          '<td>' + r.pushups + '</td>' +
+          '<td>' + r.situps  + '</td>' +
+          '<td>' + runDisplay + '</td>' +
+          '<td><strong>' + Number(r.total) + '</strong></td>' +
+          '<td><span class="award-badge ' + badgeClass + '">' +
+            r.award + '</span></td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ── Boot ─────────────────────────────────────────────────────────────────
+
+    if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbw1pKWSWSJdHesqh68813VJvb78UFjd6ZNKF2TlhdJ4M8yJBTmzW5VBp2Z5KGpdM-_1iQ/exec') {
+      showError(
+        'Dashboard not configured yet. ' +
+        'Open dashboard.html and replace https://script.google.com/macros/s/AKfycbw1pKWSWSJdHesqh68813VJvb78UFjd6ZNKF2TlhdJ4M8yJBTmzW5VBp2Z5KGpdM-_1iQ/exec ' +
+        'with your Apps Script web app URL.'
+      );
+    } else {
+      fetch(SCRIPT_URL)
+        .then(function(res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function(data) {
+          if (data.status === 'error') throw new Error(data.message);
+          render(data);
+        })
+        .catch(function(err) {
+          showError('Could not load data: ' + err.message +
+                    '. Check your Apps Script URL and make sure the web app is deployed as "Anyone".');
+        });
+    }
+  </script>
+</body>
+</html>
