@@ -215,12 +215,14 @@
       btn.textContent = "Saving…";
       status.style.display = "none";
 
+      const runMm = parseInt(document.getElementById("run_mm").value) || 0;
+      const runSs = parseInt(document.getElementById("run_ss").value) || 0;
       const payload = {
-        date:    document.getElementById("date").value,
-        pushups: document.getElementById("pushups").value,
-        situps:  document.getElementById("situps").value,
-        run_mm:  document.getElementById("run_mm").value,
-        run_ss:  document.getElementById("run_ss").value,
+        date:        document.getElementById("date").value,
+        pushups:     document.getElementById("pushups").value,
+        situps:      document.getElementById("situps").value,
+        run_seconds: String(runMm * 60 + runSs),
+        run_display: runMm + ":" + String(runSs).padStart(2, "0"),
       };
 
       try {
