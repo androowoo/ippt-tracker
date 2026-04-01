@@ -291,6 +291,14 @@
       return m + ':' + (s < 10 ? '0' : '') + s;
     }
 
+    // run_seconds comes back as a Date object from Sheets, not a number.
+    // Reverse-calculate from run_pts (always a plain number) instead.
+    function runDisplay(r) {
+      var pts = Number(r.run_pts);
+      if (isNaN(pts)) return '—';
+      return secsToDisplay(590 + (50 - pts) * 10);
+    }
+
     function daysSince(isoStr) {
       var then = new Date(isoStr);
       var now  = new Date();
@@ -344,7 +352,7 @@
         bestTotal.award + ' · ' + fmtDate(bestTotal.date);
 
       document.getElementById('pb-run').textContent =
-        secsToDisplay(Number(bestRun.run_seconds));
+        runDisplay(bestRun);
       document.getElementById('pb-run-sub').textContent = fmtDate(bestRun.date);
 
       document.getElementById('pb-pu').textContent = Number(bestPU.pushups);
@@ -419,7 +427,7 @@
                     var r = chartRows[ctx.dataIndex];
                     return r.award + ' · PU ' + r.pushups +
                            ' SU ' + r.situps +
-                           ' Run ' + secsToDisplay(Number(r.run_seconds));
+                           ' Run ' + runDisplay(r);
                   }
                 }
               }
@@ -447,13 +455,13 @@
 
       newestFirst.forEach(function(r) {
         var tr = document.createElement('tr');
-        var runDisplay = secsToDisplay(Number(r.run_seconds));
+        var runDisp = runDisplay(r);
         var badgeClass = awardClass(r.award);
         tr.innerHTML =
           '<td>' + fmtDate(r.date) + '</td>' +
           '<td>' + r.pushups + '</td>' +
           '<td>' + r.situps  + '</td>' +
-          '<td>' + runDisplay + '</td>' +
+          '<td>' + runDisp + '</td>' +
           '<td><strong>' + Number(r.total) + '</strong></td>' +
           '<td><span class="award-badge ' + badgeClass + '">' +
             r.award + '</span></td>';
