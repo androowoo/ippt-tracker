@@ -226,17 +226,16 @@
       };
 
       try {
-        const qs = new URLSearchParams({ action: "submit", ...payload });
-        const res = await fetch(SCRIPT_URL + "?" + qs.toString());
-        const json = await res.json();
-
-        if (json.status === "ok") {
-          showStatus("Saved!", "success");
-          document.getElementById("ipptForm").reset();
-          document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
-        } else {
-          showStatus("Error: " + (json.message || "unknown"), "error");
-        }
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(payload),
+        });
+        // no-cors means we can't read the response, but the data IS sent
+        showStatus("Saved! Check your sheet to confirm.", "success");
+        document.getElementById("ipptForm").reset();
+        document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
       } catch (err) {
         showStatus("Network error — check your connection.", "error");
       }
