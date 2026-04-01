@@ -463,10 +463,10 @@
 
     // ── Boot ─────────────────────────────────────────────────────────────────
 
-    if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbw1pKWSWSJdHesqh68813VJvb78UFjd6ZNKF2TlhdJ4M8yJBTmzW5VBp2Z5KGpdM-_1iQ/exec') {
+    if (!SCRIPT_URL || SCRIPT_URL.indexOf('script.google.com') === -1) {
       showError(
         'Dashboard not configured yet. ' +
-        'Open dashboard.html and replace https://script.google.com/macros/s/AKfycbw1pKWSWSJdHesqh68813VJvb78UFjd6ZNKF2TlhdJ4M8yJBTmzW5VBp2Z5KGpdM-_1iQ/exec ' +
+        'Open dashboard.html and replace the SCRIPT_URL placeholder ' +
         'with your Apps Script web app URL.'
       );
     } else {
