@@ -227,9 +227,7 @@
 
       try {
         const qs = new URLSearchParams({ action: "submit", ...payload });
-        const fullUrl = SCRIPT_URL + "?" + qs.toString();
-        alert("DEBUG URL:\n" + fullUrl);
-        const res = await fetch(fullUrl);
+        const res = await fetch(SCRIPT_URL + "?" + qs.toString());
         const json = await res.json();
 
         if (json.status === "ok") {
